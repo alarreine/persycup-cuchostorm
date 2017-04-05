@@ -160,15 +160,14 @@ public final class Controler {
 
 	private void mainLoop(boolean seekLeft) {
 		State state = State.firstMove;
-		//TEST
-		//State state = State.needToSeek;
 		boolean run = true;
 		boolean unique = true;
 		boolean unique2 = true;
 		float searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
 		boolean isAtWhiteLine = false;
 		int nbSeek = R2D2Constants.INIT_NB_SEEK;
-		
+		// boolean seekLeft = initLeft;
+		// Boucle de jeu
 		while (run) {
 			/*
 			 * - Quand on part chercher un palet, on mesure le temps de trajet -
@@ -192,23 +191,49 @@ public final class Controler {
 				 * needToResetInitialSeekOrientation
 				 */
 				case firstMove:
+					whoAmI();
 					PROPULSION.run(true);
 					state = State.playStart;
 					break;
+				
 				case playStart:
 					while (PROPULSION.isRunning()) {
+						PROPULSION.checkState(); //*
 						if (PRESSION.isPressed()) {
 							PROPULSION.stopMoving();
 							GRABER.close();
 						}
 					}
-					PROPULSION.rotate(R2D2Constants.ANGLE_START, seekLeft, false);
+					
+					// Se decale et avance pour eviter les autres palets
+					PROPULSION.rotate(R2D2Constants.ANGLE_CORRECTION, seekLeft, true); //* ANGLE_START ??
 					while (PROPULSION.isRunning() || GRABER.isRunning()) {
 						PROPULSION.checkState();
 						GRABER.checkState();
 						if (INPUT.escapePressed())
 							return;
+					} 
+
+					//PROPULSION.rotate(R2D2Constants.ANGLE_START, seekLeft, false);
+					
+					// Avance pendant une demi seconde
+					PROPULSION.runFor(R2D2Constants.HALF_SECOND, false);
+					while (PROPULSION.isRunning()) {
+						PROPULSION.checkState();
+						if (INPUT.escapePressed())
+							return;
 					}
+					
+					// Se replace dans la bonne direction
+					PROPULSION.orientateNorth(); //* North (face au camp adverse) ??
+					while (PROPULSION.isRunning() || GRABER.isRunning()) {
+						PROPULSION.checkState();
+						GRABER.checkState();
+						if (INPUT.escapePressed())
+							return;
+					} 
+					
+					// Avance jusqu'a ligne blanche
 					PROPULSION.run(true);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
@@ -218,33 +243,44 @@ public final class Controler {
 							PROPULSION.stopMoving();
 						}
 					}
+					
+					// Lache l'objet
 					GRABER.open();
 					while (GRABER.isRunning()) {
 						GRABER.checkState();
 						if (INPUT.escapePressed())
 							return;
 					}
+					
+					// Recule
 					PROPULSION.runFor(R2D2Constants.QUARTER_SECOND, false);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
 							return;
 					}
+					
+					// Demi-tour
 					PROPULSION.halfTurn(seekLeft);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
 							return;
 					}
-					PROPULSION.run(true);
-					while (PROPULSION.isRunning()) {
+					
+					
+					//PROPULSION.run(true);
+					/*while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
 							return;
+					
 						if (COLOR.getCurrentColor() == Color.BLACK) {
 							PROPULSION.stopMoving();
 						}
-					}
+					}*/
+					
+					
 					/*
 					 * propulsion.orientateSouth(seekLeft);
 					 * while(propulsion.isRunning()){ propulsion.checkState();
@@ -267,9 +303,11 @@ public final class Controler {
 				 * attrapé pendant ce temps ou à disparu, alors il ne roulera
 				 * pas dans le vide pour rien
 				 */
-				case needToSeek:
+				case needToSeek: 
+					
+					//PROPULSION.orientateWest(); //*
 					state = State.isSeeking;
-
+					
 					searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
 					PROPULSION.volteFace(seekLeft, R2D2Constants.SEARCH_SPEED);
 					isAtWhiteLine = false;
@@ -281,13 +319,11 @@ public final class Controler {
 					// et supérieure au rayon minimum alors
 					// on a trouvé un objet à rammaser.
 					if (newDist < R2D2Constants.MAX_VISION_RANGE && newDist >= R2D2Constants.MIN_VISION_RANGE) {
-//						PROPULSION.slowDown(10);
 						if (searchPik == R2D2Constants.INIT_SEARCH_PIK_VALUE) {
 							if (unique2) {
 								unique2 = false;
 							} else {
 								PROPULSION.stopMoving();
-								
 								// TODO, ces 90° peuvent poser problème.
 								// Genre, dans le cas où le dernier palet de la
 								// recherche
@@ -304,7 +340,6 @@ public final class Controler {
 							if (newDist <= searchPik) {
 								searchPik = newDist;
 							} else {
-								
 								PROPULSION.stopMoving();
 								unique2 = true;
 								state = State.needToGrab;
@@ -657,4 +692,5 @@ public final class Controler {
 		}
 
 	}
+	
 }
