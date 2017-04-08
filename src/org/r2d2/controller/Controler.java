@@ -1,13 +1,6 @@
 package org.r2d2.controller;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -17,7 +10,6 @@ import org.r2d2.eye.InputHandler;
 import org.r2d2.eye.Screen;
 import org.r2d2.motor.Graber;
 import org.r2d2.motor.Propulsion;
-import org.r2d2.motor.TImedMotor;
 import org.r2d2.sensor.ColorSensor;
 import org.r2d2.sensor.PressionSensor;
 import org.r2d2.sensor.VisionSensor;
@@ -25,6 +17,7 @@ import org.r2d2.util.CameraClient;
 import org.r2d2.util.ObjectPosition;
 import org.r2d2.util.R2D2Constants;
 import org.r2d2.util.State;
+
 import lejos.hardware.Button;
 import lejos.robotics.Color;
 
@@ -60,25 +53,19 @@ public final class Controler {
 		me = new ObjectPosition();
 	}
 
-	/**
-	 * Lance le robot. Dans un premier temps, effectue une calibration des
-	 * capteurs. Dans un second temps, lance des tests Dans un troisième temps,
-	 * démarre la boucle principale du robot pour la persycup
-	 * 
-	 * @throws IOException
-	 * @throws ClassNotFoundException
-	 */
 	public void start() throws IOException, ClassNotFoundException {
-		loadCalibration();
-		SCREEN.drawText("Calibration", "Appuyez sur echap ", "pour skipper");
-		boolean skip = INPUT.waitOkEscape(Button.ID_ESCAPE);
+		Calibration calibration = new Calibration();
+
+		calibration.loadCalibration();
+		Controler.SCREEN.drawText("Calibration", "Appuyez sur echap ", "pour skipper");
+		boolean skip = Controler.INPUT.waitOkEscape(Button.ID_ESCAPE);
 		if (skip || calibration()) {
 			if (!skip) {
-				saveCalibration();
+				calibration.saveCalibration();
 			}
-			SCREEN.drawText("Lancer", "Appuyez sur OK si la", "ligne noire est à gauche", "Appuyez sur tout autre",
-					"elle est à droite");
-			if (INPUT.isThisButtonPressed(INPUT.waitAny(), Button.ID_ENTER)) {
+			Controler.SCREEN.drawText("Lancer", "Appuyez sur OK si la", "ligne noire est à gauche",
+					"Appuyez sur tout autre", "elle est à droite");
+			if (Controler.INPUT.isThisButtonPressed(INPUT.waitAny(), Button.ID_ENTER)) {
 				mainLoop(true);
 			} else {
 				mainLoop(false);
@@ -88,44 +75,13 @@ public final class Controler {
 	}
 
 	/**
-	 * Charge la calibration du fichier de configuration si elle existe
+	 * Lance le robot. Dans un premier temps, effectue une calibration des
+	 * capteurs. Dans un second temps, lance des tests Dans un troisième temps,
+	 * démarre la boucle principale du robot pour la persycup
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	private void loadCalibration() throws FileNotFoundException, IOException, ClassNotFoundException {
-		File file = new File("calibration");
-		if (file.exists()) {
-			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
-			COLOR.setCalibration((float[][]) ois.readObject());
-			GRABER.setOpenTime((long) ois.readObject());
-			ois.close();
-		}
-	}
-
-	/**
-	 * Sauvegarde la calibration
-	 * 
-	 * @throws IOException
-	 */
-	private void saveCalibration() throws IOException {
-		SCREEN.drawText("Sauvegarde", "Appuyez sur le bouton central ", "pour valider id", "Echap pour ne pas sauver");
-		if (INPUT.waitOkEscape(Button.ID_ENTER)) {
-			File file = new File("calibration");
-			if (!file.exists()) {
-				file.createNewFile();
-			} else {
-				file.delete();
-				file.createNewFile();
-			}
-			ObjectOutputStream str = new ObjectOutputStream(new FileOutputStream(file));
-			str.writeObject(COLOR.getCalibration());
-			str.writeObject(GRABER.getOpenTime());
-			str.flush();
-			str.close();
-		}
-	}
 
 	/**
 	 * Effectue l'ensemble des actions nécessaires à l'extinction du programme
@@ -160,15 +116,15 @@ public final class Controler {
 
 	private void mainLoop(boolean seekLeft) {
 		State state = State.firstMove;
-		//TEST
-		//State state = State.needToSeek;
+		// TEST
+		// State state = State.needToSeek;
 		boolean run = true;
 		boolean unique = true;
 		boolean unique2 = true;
 		float searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
 		boolean isAtWhiteLine = false;
 		int nbSeek = R2D2Constants.INIT_NB_SEEK;
-		
+
 		while (run) {
 			/*
 			 * - Quand on part chercher un palet, on mesure le temps de trajet -
@@ -281,13 +237,13 @@ public final class Controler {
 					// et supérieure au rayon minimum alors
 					// on a trouvé un objet à rammaser.
 					if (newDist < R2D2Constants.MAX_VISION_RANGE && newDist >= R2D2Constants.MIN_VISION_RANGE) {
-//						PROPULSION.slowDown(10);
+						// PROPULSION.slowDown(10);
 						if (searchPik == R2D2Constants.INIT_SEARCH_PIK_VALUE) {
 							if (unique2) {
 								unique2 = false;
 							} else {
 								PROPULSION.stopMoving();
-								
+
 								// TODO, ces 90° peuvent poser problème.
 								// Genre, dans le cas où le dernier palet de la
 								// recherche
@@ -304,7 +260,7 @@ public final class Controler {
 							if (newDist <= searchPik) {
 								searchPik = newDist;
 							} else {
-								
+
 								PROPULSION.stopMoving();
 								unique2 = true;
 								state = State.needToGrab;
@@ -536,6 +492,7 @@ public final class Controler {
 	 * @return vrai si tout c'est bien passé.
 	 */
 	private boolean calibration() {
+
 		return calibrationGrabber() && calibrationCouleur();
 	}
 
@@ -548,8 +505,10 @@ public final class Controler {
 			GRABER.startCalibrate(false);
 			INPUT.waitAny();
 			GRABER.stopCalibrate(false);
+
 			SCREEN.drawText("Calibration", "Appuyer sur Entree", "pour commencer la", "calibration de l'ouverture");
 			INPUT.waitAny();
+
 			SCREEN.drawText("Calibration", "Appuyer sur Entree", "Quand la pince est ouverte");
 			GRABER.startCalibrate(true);
 			INPUT.waitAny();
