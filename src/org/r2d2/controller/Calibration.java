@@ -28,6 +28,7 @@ public class Calibration {
 			Controler.COLOR.setCalibration((float[][]) oisColor.readObject());
 			oisColor.close();
 		}
+
 		if (fichierPince.exists()) {
 			ObjectInputStream oisPince = new ObjectInputStream(new FileInputStream(fichierPince));
 			Controler.GRABER.setOpenTime((long) oisPince.readObject());
@@ -71,3 +72,4 @@ public class Calibration {
 	}
 
 }
+
