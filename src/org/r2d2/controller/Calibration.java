@@ -12,24 +12,6 @@ import lejos.hardware.Button;
 
 public class Calibration {
 	
-	public void start() throws IOException, ClassNotFoundException {
-//		loadCalibration();
-//		Controler.SCREEN.drawText("Calibration", "Appuyez sur echap ", "pour skipper");
-//		boolean skip = Controler.INPUT.waitOkEscape(Button.ID_ESCAPE);
-//		if (skip || calibration()) {
-//			if (!skip) {
-//				saveCalibration();
-//			}
-//			Controler.SCREEN.drawText("Lancer", "Appuyez sur OK si la", "ligne noire est à gauche", "Appuyez sur tout autre",
-//					"elle est à droite");
-//			if (Controler.INPUT.isThisButtonPressed(INPUT.waitAny(), Button.ID_ENTER)) {
-//				mainLoop(true);
-//			} else {
-//				mainLoop(false);
-//			}
-//		}
-//		cleanUp();
-	}
 
 	/**
 	 * Charge la calibration du fichier de configuration si elle existe
