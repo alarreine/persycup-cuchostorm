@@ -69,12 +69,15 @@ public final class Controler {
 	 * @throws ClassNotFoundException
 	 */
 	public void start() throws IOException, ClassNotFoundException {
-		loadCalibration();
+		Calibration calibration = new Calibration();
+		calibration.loadCalibration();
+		//loadCalibration();
 		SCREEN.drawText("Calibration", "Appuyez sur echap ", "pour skipper");
 		boolean skip = INPUT.waitOkEscape(Button.ID_ESCAPE);
 		if (skip || calibration()) {
 			if (!skip) {
-				saveCalibration();
+				calibration.saveCalibration();
+				//saveCalibration();
 			}
 			SCREEN.drawText("Lancer", "Appuyez sur OK si la", "ligne noire est à gauche", "Appuyez sur tout autre",
 					"elle est à droite");
@@ -89,13 +92,13 @@ public final class Controler {
 		cleanUp();
 	}
 
-	/**
+	/*
 	 * Charge la calibration du fichier de configuration si elle existe
 	 * 
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 * @throws ClassNotFoundException
-	 */
+	 *
 	private void loadCalibration() throws FileNotFoundException, IOException, ClassNotFoundException {
 		File file = new File("calibration");
 		if (file.exists()) {
@@ -106,11 +109,11 @@ public final class Controler {
 		}
 	}
 
-	/**
+	/*
 	 * Sauvegarde la calibration
 	 * 
 	 * @throws IOException
-	 */
+	 *
 	private void saveCalibration() throws IOException {
 		SCREEN.drawText("Sauvegarde", "Appuyez sur le bouton central ", "pour valider id", "Echap pour ne pas sauver");
 		if (INPUT.waitOkEscape(Button.ID_ENTER)) {
@@ -127,7 +130,7 @@ public final class Controler {
 			str.flush();
 			str.close();
 		}
-	}
+	}*/
 
 	/**
 	 * Effectue l'ensemble des actions nécessaires à l'extinction du programme
@@ -190,12 +193,12 @@ public final class Controler {
 					
 					// Bras se ferment et en meme temps, Se decale et avance pour eviter les autres palets
 					PROPULSION.rotate(20, !seekLeft, true); 
-					while(GRABER.isRunning() || PROPULSION.isRunning()){
+					/*while(GRABER.isRunning() || PROPULSION.isRunning()){
 						GRABER.checkState();
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
 							return;
-					}
+					}*/
 					
 					
 					// Avance pendant deux secondes
@@ -209,22 +212,22 @@ public final class Controler {
 					// Se replace dans la bonne direction
 					//PROPULSION.orientateNorth();
 					PROPULSION.rotate(20, seekLeft, true); 
-					while (PROPULSION.isRunning()) {
+					/*while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
 							return;
-					} 
+					} */
 					
 					// Avance jusqu'a ligne blanche
-					//PROPULSION.run(true);
-					PROPULSION.runFor(1500, true);
+					PROPULSION.run(true);
+					//PROPULSION.runFor(1500, true);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
 							return;
-						/*if (COLOR.getCurrentColor() == Color.WHITE) {
+						if (COLOR.getCurrentColor() == Color.WHITE) {
 							PROPULSION.stopMoving();
-						}*/
+						}
 						
 					}
 					
@@ -268,7 +271,7 @@ public final class Controler {
 				
 				case isSeeking:
 					float newDist = VISION.getRaw()[0];
-					// Si la distance de l'objet percu et entre les bornes max et min de la vision : OK
+					// Si la distance de l'objet percu est entre les bornes max et min de la vision : OK
 					if (newDist < R2D2Constants.MAX_VISION_RANGE && newDist >= R2D2Constants.MIN_VISION_RANGE){
 						if(searchPik == R2D2Constants.INIT_SEARCH_PIK_VALUE){
 							searchPik = newDist;
@@ -436,7 +439,23 @@ public final class Controler {
 					break;
 				
 				case isSeekingLost:
-					PROPULSION.run(false);
+					PROPULSION.stopMoving();
+					PROPULSION.orientateNorth();
+					while(PROPULSION.isRunning()){
+						PROPULSION.checkState();
+					}
+					PROPULSION.run(true);
+					while(PROPULSION.isRunning()){
+						PROPULSION.checkState();
+						if(INPUT.escapePressed()){
+							return;
+						}
+						if(COLOR.getCurrentColor()==Color.WHITE){
+							PROPULSION.stopMoving();
+						}
+					}
+					PROPULSION.halfTurn(seekLeft);
+					state = State.needToSeek;
 					break;
 					
 					
@@ -524,13 +543,7 @@ public final class Controler {
 		}
 	}
 	
-	
-	
-	
-	
-	
-	
-	
+
 	
 	private void mainLoop(boolean seekLeft) {
 		State state = State.firstMove;
@@ -669,7 +682,7 @@ public final class Controler {
 				 */
 				case needToSeek: 
 					
-					PROPULSION.orientateWest();
+					//PROPULSION.orientateWest();
 					state = State.isSeeking;			
 					searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE; 
 					PROPULSION.volteFace(seekLeft, R2D2Constants.SEARCH_SPEED);
