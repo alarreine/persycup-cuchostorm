@@ -23,15 +23,15 @@ public class Calibration {
 	public void loadCalibration() throws FileNotFoundException, IOException, ClassNotFoundException {
 		File fichierPince = new File("calibracionpince");
 		File fichierCouleur = new File("calibracioncouleur");
-		if (fichierPince.exists()) {
-			ObjectInputStream oisPince = new ObjectInputStream(new FileInputStream(fichierPince));
-			Controler.GRABER.setOpenTime((long) oisPince.readObject());
-			oisPince.close();
-		}
 		if (fichierCouleur.exists()) {
 			ObjectInputStream oisColor = new ObjectInputStream(new FileInputStream(fichierCouleur));
 			Controler.COLOR.setCalibration((float[][]) oisColor.readObject());
 			oisColor.close();
+		}
+		if (fichierPince.exists()) {
+			ObjectInputStream oisPince = new ObjectInputStream(new FileInputStream(fichierPince));
+			Controler.GRABER.setOpenTime((long) oisPince.readObject());
+			oisPince.close();
 		}
 	}
 
@@ -52,11 +52,10 @@ public class Calibration {
 				fichierPince.createNewFile();
 			}
 
-			ObjectOutputStream str = new ObjectOutputStream(new FileOutputStream(fichierPince));
-			str.writeObject(Controler.COLOR.getCalibration());
-			str.writeObject(Controler.GRABER.getOpenTime());
-			str.flush();
-			str.close();
+			ObjectOutputStream strPince = new ObjectOutputStream(new FileOutputStream(fichierPince));
+			strPince.writeObject(Controler.GRABER.getOpenTime());
+			strPince.flush();
+			strPince.close();
 
 			if (!fichierCouleur.exists()) {
 				fichierCouleur.createNewFile();
