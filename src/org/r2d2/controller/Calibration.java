@@ -24,14 +24,14 @@ public class Calibration {
 		File fichierPince = new File("calibracionpince");
 		File fichierCouleur = new File("calibracioncouleur");
 		if (fichierPince.exists()) {
-			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fichierPince));
-			Controler.GRABER.setOpenTime((long) ois.readObject());
-			ois.close();
+			ObjectInputStream oisPince = new ObjectInputStream(new FileInputStream(fichierPince));
+			Controler.GRABER.setOpenTime((long) oisPince.readObject());
+			oisPince.close();
 		}
 		if (fichierCouleur.exists()) {
-			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fichierCouleur));
-			Controler.COLOR.setCalibration((float[][]) ois.readObject());
-			ois.close();
+			ObjectInputStream oisColor = new ObjectInputStream(new FileInputStream(fichierCouleur));
+			Controler.COLOR.setCalibration((float[][]) oisColor.readObject());
+			oisColor.close();
 		}
 	}
 
