@@ -65,9 +65,9 @@ public final class Controler {
 			Controler.SCREEN.drawText("Lancer", "Appuyez sur OK si la", "ligne noire est à gauche",
 					"Appuyez sur tout autre", "elle est à droite");
 			if (Controler.INPUT.isThisButtonPressed(INPUT.waitAny(), Button.ID_ENTER)) {
-				mainLoop(true);
+				mainLoopTest(true);
 			} else {
-				mainLoop(false);
+				mainLoopTest(false);
 			}
 			
 		}
@@ -113,6 +113,7 @@ public final class Controler {
 		float searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
 		boolean isAtWhiteLine = false;
 		int nbSeek = R2D2Constants.INIT_NB_SEEK;
+		boolean attempt2=false;
 		while (run) {
 			try {
 				PROPULSION.checkState();
@@ -135,12 +136,12 @@ public final class Controler {
 					
 					// Bras se ferment et en meme temps, Se decale et avance pour eviter les autres palets
 					PROPULSION.rotate(20, !seekLeft, true); 
-					/*while(GRABER.isRunning() || PROPULSION.isRunning()){
+					while(GRABER.isRunning() || PROPULSION.isRunning()){
 						GRABER.checkState();
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
 							return;
-					}*/
+					}
 					
 					
 					// Avance pendant deux secondes
@@ -154,15 +155,14 @@ public final class Controler {
 					// Se replace dans la bonne direction
 					//PROPULSION.orientateNorth();
 					PROPULSION.rotate(20, seekLeft, true); 
-					/*while (PROPULSION.isRunning()) {
+					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
 							return;
-					} */
+					} 
 					
 					// Avance jusqu'a ligne blanche
 					PROPULSION.run(true);
-					//PROPULSION.runFor(1500, true);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
@@ -170,7 +170,6 @@ public final class Controler {
 						if (COLOR.getCurrentColor() == Color.WHITE) {
 							PROPULSION.stopMoving();
 						}
-						
 					}
 					
 					// Lache l'objet
@@ -213,82 +212,59 @@ public final class Controler {
 				
 				case isSeeking:
 					float newDist = VISION.getRaw()[0];
+					
 					// Si la distance de l'objet percu est entre les bornes max et min de la vision : OK
 					if (newDist < R2D2Constants.MAX_VISION_RANGE && newDist >= R2D2Constants.MIN_VISION_RANGE){
 						if(searchPik == R2D2Constants.INIT_SEARCH_PIK_VALUE){
 							searchPik = newDist;
 							PROPULSION.stopMoving();
 							PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
-							while(PROPULSION.isRunning()){
-								PROPULSION.checkState();
-								newDist = VISION.getRaw()[0];
-								if(searchPik >= newDist){
-									searchPik = newDist;
-								}else{
-									PROPULSION.stopMoving();
-									state = State.needToGrab;
-								}
+						}else{
+							if (newDist <= searchPik) {
+							searchPik = newDist;
+							} else {
+								PROPULSION.stopMoving();
+								unique2 = true;
+								state = State.needToGrab;
 							}
 						}
 					}
 					
-					// S'il a fini son tour de recherche et qu'il n'a pas trouvé de palet côté seekLeft
+					// S'il a fini son tour de recherche et qu'il n'a pas trouvé de palet
 					if(!PROPULSION.isRunning() && state != State.needToGrab){
-						PROPULSION.halfTurn(!seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
-						while (PROPULSION.isRunning()){
-							PROPULSION.checkState();
+						if(!attempt2){
+							PROPULSION.halfTurn(!seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
+							while (PROPULSION.isRunning()){
+								PROPULSION.checkState();
+							}
+
+							PROPULSION.halfTurn(!seekLeft, R2D2Constants.SEARCH_SPEED);
+							state = State.isSeeking; // Inutile ??
+							attempt2=true;
+						}else{
+							PROPULSION.halfTurn(seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
+							while(PROPULSION.isRunning()){
+								PROPULSION.checkState();
+							}
+							PROPULSION.runFor(2000, true);
+							while(PROPULSION.isRunning()){
+								PROPULSION.checkState();
+								// S'il atteint la limite du terrain
+								if(COLOR.getCurrentColor()==Color.WHITE){
+									PROPULSION.stopMoving();
+									state = State.isSeekingEnd;
+								}
+							}
+							
+							if(state != State.isSeekingEnd){
+								state = State.needToSeek;
+							}
 						}
-						
-						PROPULSION.halfTurn(!seekLeft, R2D2Constants.SEARCH_SPEED);
-						state = State.isSeeking2;
 					}						
 					
 					break;
-				
-				case isSeeking2:
-					float newDist2 = VISION.getRaw()[0];
-					if (newDist2 < R2D2Constants.MAX_VISION_RANGE && newDist2 >= R2D2Constants.MIN_VISION_RANGE){
-						if(searchPik == R2D2Constants.INIT_SEARCH_PIK_VALUE){
-							searchPik = newDist2;
-							PROPULSION.stopMoving();
-							PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, !seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
-							while(PROPULSION.isRunning()){
-								PROPULSION.checkState();
-								newDist2 = VISION.getRaw()[0];
-								if(searchPik >= newDist2){
-									searchPik = newDist2;
-								}else{
-									PROPULSION.stopMoving();
-									state = State.needToGrab;
-								}
-							}
-						}
-					}
 					
-					// S'il a fini son tour de recherche et qu'il n'a pas trouvé de palet côté !seekLeft
-					if(!PROPULSION.isRunning() && state != State.needToGrab){
-						PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, !seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
-						while(PROPULSION.isRunning()){
-							PROPULSION.checkState();
-						}
-						PROPULSION.runFor(2000, true);
-						while(PROPULSION.isRunning()){
-							PROPULSION.checkState();
-							// S'il atteint la limite du terrain
-							if(COLOR.getCurrentColor()==Color.WHITE){
-								PROPULSION.stopMoving();
-								state = State.isSeekingEnd;
-							}
-						}
-						
-						if(state != State.isSeekingEnd){
-							state = State.needToSeek;
-						}
-					}
-					
-					break;
-				
-				case isSeekingEnd:
+				case isSeekingEnd: // TODO Trouver un moyen plus simple ?
 					// TODO verifier d'abord avec liste caméra si il n'y a plus d'objet ?
 					// Si ya des objets.. Continuer ! Sinon FIN !
 					boolean turnGoodSide=false;
@@ -300,9 +276,10 @@ public final class Controler {
 					PROPULSION.run(true);
 					while(PROPULSION.isRunning()){
 						PROPULSION.checkState();
-						if(COLOR.getCurrentColor()==Color.WHITE){
+						if(COLOR.getCurrentColor()==Color.WHITE)
 							PROPULSION.stopMoving();
-						}
+						if(INPUT.escapePressed())
+							return;
 					}
 					
 					PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
@@ -341,7 +318,7 @@ public final class Controler {
 						}
 						
 						// Run jusqu'à une ligne noire (signe de la traversée du terrain)
-						PROPULSION.run(true); 
+						PROPULSION.runFor(7000, true); // TODO A changer le temps max pour parcourir 3/4 de terrain ??
 						while(PROPULSION.isRunning()){
 							PROPULSION.checkState();
 							if(COLOR.getCurrentColor()==Color.BLACK){
@@ -355,6 +332,11 @@ public final class Controler {
 							PROPULSION.checkState();
 							if(COLOR.getCurrentColor()==Color.RED || COLOR.getCurrentColor()==Color.YELLOW){
 								PROPULSION.stopMoving();
+								PROPULSION.orientateSouth(seekLeft); // A tester !
+								while(PROPULSION.isRunning()){
+									PROPULSION.checkState();
+								}
+								state = State.needToSeek;
 							}
 							if(COLOR.getCurrentColor()==Color.BLUE || COLOR.getCurrentColor()==Color.GREEN){
 								PROPULSION.stopMoving();
@@ -363,18 +345,8 @@ public final class Controler {
 							if(INPUT.escapePressed()){
 								return;
 							}
-							// TODO Risque de boucle infinie ??
 						}
 						
-						// S'il n'est pas perdu alors 
-						if(state != State.isSeekingLost){
-							PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
-							while(PROPULSION.isRunning()){
-								PROPULSION.checkState();
-							}
-							state = State.needToSeek;
-							seekLeft = !seekLeft;
-						}
 						
 					}
 					
@@ -396,21 +368,20 @@ public final class Controler {
 							PROPULSION.stopMoving();
 						}
 					}
-					PROPULSION.halfTurn(seekLeft);
+					PROPULSION.volteFace(seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
 					state = State.needToSeek;
 					break;
 					
 					
 				case needToGrab:					
 					// Quand il est prêt de l'objet il teste ...
-					// MAIS COMMENT ALLER PRET DU PALET ??? mlm
-					//PROPULSION.runFor(R2D2Constants.MAX_GRABING_TIME,true);	
-					PROPULSION.runFor(7000,true);	
+					// MAIS COMMENT ALLER PRET DU PALET ??? mlm	
+					PROPULSION.runFor(R2D2Constants.MAX_GRABING_TIME,true);	
 					state = State.isGrabing;
 					break;
 				
 				case isGrabing:
-					float dist2 = VISION.getRaw()[0];
+					//float dist2 = VISION.getRaw()[0];
 					// Fonctionne pas trop ~ 
 					/*if(VISION.getRaw()[0] >= dist2){
 						PROPULSION.stopMoving();
@@ -433,10 +404,14 @@ public final class Controler {
 					}
 					
 					if(!PROPULSION.isRunning() && state != State.isCatching){
-						SCREEN.drawText("Il n'a rien trouve", "il faut continuer de coder mlm!");
+						//SCREEN.drawText("Il n'a rien trouve", "il faut continuer de coder mlm!");
+						PROPULSION.runFor(R2D2Constants.HALF_SECOND, false);
+						while(PROPULSION.isRunning()){
+							PROPULSION.checkState();
+						}
+						state = State.needToSeek;
 					}
 					
-
 					break;
 
 					
