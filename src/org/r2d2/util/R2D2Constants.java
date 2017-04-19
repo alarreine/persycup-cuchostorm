@@ -29,7 +29,7 @@ public class R2D2Constants {
 	public static final int EAST = QUART_CIRCLE;
 	public static final int SOUTH = HALF_CIRCLE;
 	public static final float ANGLE_START = 10;
-	public static final int MAX_GRABING_TIME = 2200;
+	public static final int MAX_GRABING_TIME = 2500;
 	public static final int ACTIVATE_SENSOR_AT_PERCENT = 20;
 	public static final int EMPTY_HANDED_STEP_FORWARD = 1300;
 	public static final float MAX_VISION_RANGE = 0.70f;
@@ -42,8 +42,8 @@ public class R2D2Constants {
 	public static final float LINEAR_ACCELERATION_STOP = 100.0f;
 	public static final float LINEAR_ACCELERATION_SLOW = 0.1f;
 	public static final int VOLTE_FACE_ROTATION = 80;
-	public static final int MAX_ROTATION_SPEED = 70;
-	public static final int SEARCH_SPEED = 30;
+	public static final int MAX_ROTATION_SPEED = 100;
+	public static final int SEARCH_SPEED = 40;
 	public static final int SLOW_SEARCH_SPEED = 20;
 	public static final int ANGLE_CORRECTION = 2;
 	public static final float PR_ANGLE_CORRECTION = ANGLE_CORRECTION / 100f;

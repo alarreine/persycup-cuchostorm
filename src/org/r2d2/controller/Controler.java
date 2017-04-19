@@ -108,11 +108,9 @@ public final class Controler {
 	private void mainLoopTest(boolean seekLeft){
 		State state = State.firstMove;
 		boolean run = true;
-		boolean unique = true;
-		boolean unique2 = true;
 		float searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
-		boolean isAtWhiteLine = false;
-		int nbSeek = R2D2Constants.INIT_NB_SEEK;
+		//int nbSeek = R2D2Constants.INIT_NB_SEEK;
+		int nbSeek = 4;
 		boolean attempt2=false;
 		while (run) {
 			try {
@@ -173,6 +171,7 @@ public final class Controler {
 					}
 					
 					// Lache l'objet
+					nbSeek--;
 					GRABER.open();
 					while (GRABER.isRunning()) {
 						GRABER.checkState();
@@ -188,15 +187,13 @@ public final class Controler {
 							return;
 					}
 					
-					// S'oriente sur le côté pour commencer la recherche
-					//PROPULSION.rotate(180, seekLeft, false);
+					// Demi-tour pour commencer la recherche
 					PROPULSION.rotate(R2D2Constants.HALF_CIRCLE, !seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
 							return;
-					}
-					
+					}			
 					state = State.needToSeek;
 					
 					break;
@@ -204,9 +201,13 @@ public final class Controler {
 					
 				case needToSeek:
 					// Effectue un quart de tour de recherche
-					state = State.isSeeking;			
-					searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
-					PROPULSION.halfTurn(seekLeft, R2D2Constants.SEARCH_SPEED);
+					if(nbSeek!=0){
+						state = State.isSeeking;			
+						searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
+						PROPULSION.halfTurn(seekLeft, R2D2Constants.SEARCH_SPEED);
+					}else{
+						SCREEN.drawText("FINITOOOOOO", "Nous avons ramassé" + nbSeek + "palets! ", "On est content !");
+					}
 					break;
 				
 				
@@ -218,22 +219,29 @@ public final class Controler {
 						if(searchPik == R2D2Constants.INIT_SEARCH_PIK_VALUE){
 							searchPik = newDist;
 							PROPULSION.stopMoving();
-							PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
+							if(!attempt2){
+								PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
+							}else{
+								PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, !seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
+							}
 						}else{
 							if (newDist <= searchPik) {
 							searchPik = newDist;
 							} else {
 								PROPULSION.stopMoving();
-								unique2 = true;
+								attempt2=false;
 								state = State.needToGrab;
 							}
 						}
+					}else{
+						searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
 					}
 					
 					// S'il a fini son tour de recherche et qu'il n'a pas trouvé de palet
 					if(!PROPULSION.isRunning() && state != State.needToGrab){
 						if(!attempt2){
 							PROPULSION.halfTurn(!seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
+							//PROPULSION.orientateSouth(!seekLeft);
 							while (PROPULSION.isRunning()){
 								PROPULSION.checkState();
 							}
@@ -243,10 +251,11 @@ public final class Controler {
 							attempt2=true;
 						}else{
 							PROPULSION.halfTurn(seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
+							//PROPULSION.orientateSouth(seekLeft);
 							while(PROPULSION.isRunning()){
 								PROPULSION.checkState();
 							}
-							PROPULSION.runFor(2000, true);
+							PROPULSION.runFor(1500, true);
 							while(PROPULSION.isRunning()){
 								PROPULSION.checkState();
 								// S'il atteint la limite du terrain
@@ -254,11 +263,16 @@ public final class Controler {
 									PROPULSION.stopMoving();
 									state = State.isSeekingEnd;
 								}
-							}
-							
-							if(state != State.isSeekingEnd){
+								if(PRESSION.isPressed()){
+									PROPULSION.stopMoving();
+									state = State.isCatching;
+									GRABER.close();
+								}
+							}						
+							if(state == State.isSeeking){
 								state = State.needToSeek;
 							}
+							attempt2=false;
 						}
 					}						
 					
@@ -268,7 +282,8 @@ public final class Controler {
 					// TODO verifier d'abord avec liste caméra si il n'y a plus d'objet ?
 					// Si ya des objets.. Continuer ! Sinon FIN !
 					boolean turnGoodSide=false;
-					PROPULSION.volteFace(seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
+					//PROPULSION.volteFace(seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
+					PROPULSION.orientateNorth();
 					while (PROPULSION.isRunning()){
 						PROPULSION.checkState();
 					}
@@ -303,7 +318,7 @@ public final class Controler {
 							PROPULSION.checkState();
 						}
 						state = State.needToSeek;
-						seekLeft = !seekLeft;
+						//seekLeft = !seekLeft;
 					}else{
 						// Recule pour faire demi-tour
 						PROPULSION.runFor(R2D2Constants.QUARTER_SECOND, false);
@@ -332,7 +347,7 @@ public final class Controler {
 							PROPULSION.checkState();
 							if(COLOR.getCurrentColor()==Color.RED || COLOR.getCurrentColor()==Color.YELLOW){
 								PROPULSION.stopMoving();
-								PROPULSION.orientateSouth(seekLeft); // A tester !
+								PROPULSION.rotate(R2D2Constants.QUART_CIRCLE,!seekLeft,R2D2Constants.MAX_ROTATION_SPEED);
 								while(PROPULSION.isRunning()){
 									PROPULSION.checkState();
 								}
@@ -374,38 +389,20 @@ public final class Controler {
 					
 					
 				case needToGrab:					
-					// Quand il est prêt de l'objet il teste ...
-					// MAIS COMMENT ALLER PRET DU PALET ??? mlm	
 					PROPULSION.runFor(R2D2Constants.MAX_GRABING_TIME,true);	
 					state = State.isGrabing;
 					break;
 				
 				case isGrabing:
-					//float dist2 = VISION.getRaw()[0];
-					// Fonctionne pas trop ~ 
-					/*if(VISION.getRaw()[0] >= dist2){
-						PROPULSION.stopMoving();
-						SCREEN.drawText("on y est presque", " OK ");
-						PROPULSION.runFor(R2D2Constants.MAX_GRABING_TIME,true);
-						while(PROPULSION.isRunning()){
-							PROPULSION.checkState();
-							if(PRESSION.isPressed())
-								System.out.println("laaa");
-						}
-						state = State.isCatching;
-					}*/
 					if(PRESSION.isPressed()){
 						PROPULSION.stopMoving();
 						GRABER.close();
-						while (GRABER.isRunning()){
-							GRABER.checkState();
-						}
 						state = State.isCatching;			
 					}
 					
 					if(!PROPULSION.isRunning() && state != State.isCatching){
 						//SCREEN.drawText("Il n'a rien trouve", "il faut continuer de coder mlm!");
-						PROPULSION.runFor(R2D2Constants.HALF_SECOND, false);
+						PROPULSION.runFor(1000, false);
 						while(PROPULSION.isRunning()){
 							PROPULSION.checkState();
 						}
@@ -420,9 +417,51 @@ public final class Controler {
 					while(PROPULSION.isRunning()){
 						PROPULSION.checkState();
 					}
-					SCREEN.drawText("FIN", "FINITOOOO");
-					run=false;
+					//SCREEN.drawText("FIN", "FINITOOOO");
+					state = State.needToGoBackHome;
 					break;
+					
+				case needToGoBackHome:
+					PROPULSION.run(true);
+					while(PROPULSION.isRunning()){
+						PROPULSION.checkState();
+						if(INPUT.escapePressed()){
+							PROPULSION.stopMoving();
+						}
+						if(COLOR.getCurrentColor()==Color.WHITE){
+							PROPULSION.stopMoving();
+							state = State.needToRelease;
+						}
+					}
+					break;
+					
+				case needToRelease:
+					nbSeek--;
+					GRABER.open();
+					while(GRABER.isRunning()){
+						GRABER.checkState();
+						if(INPUT.escapePressed()){
+							return;
+						}
+					}
+					PROPULSION.runFor(R2D2Constants.QUARTER_SECOND, false);
+					while (PROPULSION.isRunning()) {
+						PROPULSION.checkState();
+						if (INPUT.escapePressed())
+							return;
+					}
+					
+					PROPULSION.volteFace(seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
+					while(PROPULSION.isRunning()){
+						PROPULSION.checkState();
+						if (INPUT.escapePressed())
+							return;
+					}
+					
+					state = State.needToSeek;
+					
+					break;
+					
 				}
 				
 				/*
