@@ -14,7 +14,7 @@ public class Calibration {
 	
 
 	/**
-	 * Charge la calibration du fichier de configuration si elle existe
+	 * Load file if exists
 	 * 
 	 * @throws FileNotFoundException
 	 * @throws IOException
@@ -37,7 +37,7 @@ public class Calibration {
 	}
 
 	/**
-	 * Sauvegarde la calibration
+	 * Save calibration
 	 * 
 	 * @throws IOException
 	 */

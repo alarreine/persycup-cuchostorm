@@ -7,7 +7,7 @@ import ev3code.demo.DifferentialDrive;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.utility.Delay;
 
-public class Main {
+public class Test {
 
 	public static void main(String[] args) {
 

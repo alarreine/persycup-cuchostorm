@@ -1,10 +1,8 @@
-package org.r2d2.main;
-
-import org.r2d2.controller.Controler;
+package org.r2d2.controller;
 
 import lejos.utility.Delay;
 
-public class Main {
+public class Application {
 
 	public static void main(String[] args) {
 		Controler controler = new Controler();

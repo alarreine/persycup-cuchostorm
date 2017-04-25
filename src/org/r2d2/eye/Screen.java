@@ -1,8 +1,12 @@
 package org.r2d2.eye;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.Font;
 import lejos.hardware.lcd.GraphicsLCD;
+import lejos.hardware.lcd.Image;;
 
 public class Screen {
 
@@ -91,5 +95,12 @@ public class Screen {
 		for (int i = 0; i < raw.length; i++) {
 			g.drawLine(i, 0, i + 70, (int) raw[i]);
 		}
+	}
+
+	public void showCucho() throws IOException {
+		InputStream res = Screen.class.getResourceAsStream("/cucho.png");
+		Image cucho = Image.createImage(res);
+		cucho.getGraphics();
+		g.drawImage(cucho, cucho.getWidth(), cucho.getHeight(), 0);
 	}
 }

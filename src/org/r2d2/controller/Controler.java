@@ -20,6 +20,7 @@ import org.r2d2.util.State;
 
 import lejos.hardware.Button;
 import lejos.robotics.Color;
+import lejos.utility.Delay;
 
 public final class Controler {
 
@@ -54,6 +55,8 @@ public final class Controler {
 	}
 
 	public void start() throws IOException, ClassNotFoundException {
+		Controler.SCREEN.showCucho();
+		Delay.msDelay(1000);
 		Calibration calibration = new Calibration();
 		calibration.loadCalibration();
 		Controler.SCREEN.drawText("Calibration", "Appuyez sur echap ", "pour skipper");
