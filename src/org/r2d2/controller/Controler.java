@@ -143,7 +143,7 @@ public final class Controler {
 					
 					
 					// Avance pendant deux secondes
-					PROPULSION.runFor(2000, true);
+					/*PROPULSION.runFor(2000, true);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
@@ -157,7 +157,7 @@ public final class Controler {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
 							return;
-					} 
+					}*/ 
 					
 					// Avance jusqu'a ligne blanche
 					PROPULSION.run(true);
@@ -180,7 +180,7 @@ public final class Controler {
 					}
 					
 					// Recule
-					PROPULSION.runFor(R2D2Constants.QUARTER_SECOND, false);
+					PROPULSION.runFor(R2D2Constants.HALF_SECOND, false);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed())
@@ -220,9 +220,9 @@ public final class Controler {
 							searchPik = newDist;
 							PROPULSION.stopMoving();
 							if(!attempt2){
-								PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
-							}else{
 								PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, !seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
+							}else{
+								PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
 							}
 						}else{
 							if (newDist <= searchPik) {
