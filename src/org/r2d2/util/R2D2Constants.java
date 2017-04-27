@@ -36,7 +36,7 @@ public class R2D2Constants {
 	public static final float MAX_VISION_RANGE = 0.70f;
 	public static final float MIN_VISION_RANGE = 0.20f;
 	public static final float COLLISION_DISTANCE = 0.20f;
-	public static final int GRAB_CALIBRATE_SPEED = 2000;
+	public static final int GRAB_CALIBRATE_SPEED = 200;
 	public static final int GRAB_RUNNING_SPEED = 2000;
 	public static final float LINEAR_ACCELERATION = 0.2f;
 	public static final double LINEAR_SPEED = 200;
