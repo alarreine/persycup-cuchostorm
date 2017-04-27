@@ -97,10 +97,10 @@ public class Screen {
 		}
 	}
 
-	public void showCucho() throws IOException {
-		InputStream res = Screen.class.getResourceAsStream("/cucho.png");
-		Image cucho = Image.createImage(res);
-		cucho.getGraphics();
-		g.drawImage(cucho, cucho.getWidth(), cucho.getHeight(), 0);
-	}
+//	public void showCucho() throws IOException {
+//		InputStream res = Screen.class.getResourceAsStream("/cucho.png");
+//		Image cucho = Image.createImage(res);
+//		cucho.getGraphics();
+//		g.drawImage(cucho, cucho.getWidth(), cucho.getHeight(), 0);
+//	}
 }
