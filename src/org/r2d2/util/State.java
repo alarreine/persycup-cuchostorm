@@ -7,5 +7,5 @@ public enum State {
 	isRotatingToEast, needToRotateWest, isRotatingToWest, needToGoBackHome, isRunningBackHome, 
 	needToResetInitialSeekOrientation, isResetingInitialSeekOrientation, needToTurnBackToGoBackHome, 
 	isTurningBackToGoBackHome, needToOrientateNorthToRelease, isOrientatingNorthToRealease, 
-	isAjustingBackHome, isGoingToOrientateN, wallInFront
+	isAjustingBackHome, isGoingToOrientateN, wallInFront, wallInFrontWithPallet
 }

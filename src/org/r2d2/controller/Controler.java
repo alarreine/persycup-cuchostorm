@@ -44,7 +44,7 @@ public final class Controler implements FeatureListener {
 
 	// True if we are blue side
 	private boolean blueSide;
-
+	
 	State state = State.firstMove;
 
 	public Controler() {
@@ -258,9 +258,9 @@ public final class Controler implements FeatureListener {
 							searchPik = newDist;
 							PROPULSION.stopMoving();
 							if (!attempt2) {
-								PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, !seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
+								PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
 							} else {
-								PROPULSION.rotate(10, seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
+								PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, !seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
 							}
 						} else {
 							if (newDist <= searchPik) {
@@ -318,9 +318,6 @@ public final class Controler implements FeatureListener {
 					break;
 
 				case isSeekingEnd:
-					// TODO verifier d'abord avec liste caméra si il n'y a plus
-					// d'objet ?
-					// Si ya des objets.. Continuer ! Sinon FIN !
 					boolean turnGoodSide = false;
 					// PROPULSION.volteFace(seekLeft,
 					// R2D2Constants.MAX_ROTATION_SPEED);
@@ -463,7 +460,8 @@ public final class Controler implements FeatureListener {
 					}
 
 					break;
-
+				
+				// Il a le palet et s'oriente vers le camp adverse
 				case isCatching:
 					PROPULSION.orientateNorth();
 					while (PROPULSION.isRunning()) {
@@ -488,7 +486,6 @@ public final class Controler implements FeatureListener {
 					break;
 
 				case needToRelease:
-					nbSeek--;
 					GRABER.open();
 					while (GRABER.isRunning()) {
 						GRABER.checkState();
@@ -520,26 +517,43 @@ public final class Controler implements FeatureListener {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed()) {
 							return;
-						}
-						int color = COLOR.getCurrentColor();
-						if ((color == Color.RED && blueSide) || (color == Color.YELLOW && !blueSide)) {
+						}	
+						if(COLOR.getCurrentColor()!= Color.GRAY){
 							PROPULSION.stopMoving();
-
 						}
-
-						if ((color == Color.RED && !blueSide) || (color == Color.YELLOW && blueSide)) {
-							PROPULSION.stopMoving();
-							attempt2 = true;
-						}
-
 					}
+					
 					PROPULSION.orientateNorth();
-
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
+						if (INPUT.escapePressed()) {
+							return;
+						}
+					}
+					
+					seekLeft = !seekLeft;
+					state = State.isSeeking;
+
+
+					break;
+					
+				case wallInFrontWithPallet:
+					PROPULSION.runFor(R2D2Constants.HALF_SECOND,false);
+					while (PROPULSION.isRunning()) {
+						PROPULSION.checkState();
+						if (INPUT.escapePressed()) {
+							return;
+						}	
+					}
+					PROPULSION.orientateNorth();
+					while (PROPULSION.isRunning()) {
+						PROPULSION.checkState();
+						if (INPUT.escapePressed()) {
+							return;
+						}
 					}
 
-					state = State.isSeeking;
+					state = State.needToGoBackHome;
 
 					break;
 
@@ -585,7 +599,11 @@ public final class Controler implements FeatureListener {
 	@Override
 	public void featureDetected(Feature feature, FeatureDetector detector) {
 		float range = feature.getRangeReading().getRange();
-		state = State.wallInFront;
+		if(state == State.isGrabing){
+			state = State.wallInFrontWithPallet;
+		}else{
+			state = State.wallInFront;
+		}
 	}
 
 }

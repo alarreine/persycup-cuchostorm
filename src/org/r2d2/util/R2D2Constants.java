@@ -20,7 +20,7 @@ public class R2D2Constants {
 	public static final int FULL_CIRCLE = 360;
 	public static final float WHEEL_DIAMETER = 56;
 	public static final float DISTANCE_TO_CENTER = 62.525f;
-	public static final float DISTANCE_MAX_WALL = 0.10f;
+	public static final float DISTANCE_MAX_WALL = 0.19f;
 
 	/*
 	 * Runing parameters, may be changed
