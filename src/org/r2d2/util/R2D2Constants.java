@@ -1,13 +1,13 @@
 package org.r2d2.util;
 
 public class R2D2Constants {
-	public static final String RIGHT_WHEEL = "A";
-	public static final String PINCH = "B";
-	public static final String LEFT_WHEEL = "C";
+	public static final String RIGHT_WHEEL = "A"; //A
+	public static final String PINCH = "B";//B
+	public static final String LEFT_WHEEL = "C"; //C
 
 	public static final String COLOR_SENSOR = "S1";
-	public static final String IR_SENSOR = "S2";
-	public static final String TOUCH_SENSOR = "S3";
+	public static final String IR_SENSOR = "S2";//S2
+	public static final String TOUCH_SENSOR = "S3";//S3
 
 	public static final int QUARTER_SECOND = 250;
 	public static final int HALF_SECOND = 500;
@@ -20,7 +20,7 @@ public class R2D2Constants {
 	public static final int FULL_CIRCLE = 360;
 	public static final float WHEEL_DIAMETER = 56;
 	public static final float DISTANCE_TO_CENTER = 62.525f;
-	public static final float DISTANCE_MAX_WALL = 0.100f;
+	public static final float DISTANCE_MAX_WALL = 0.10f;
 
 	/*
 	 * Runing parameters, may be changed
@@ -36,7 +36,7 @@ public class R2D2Constants {
 	public static final float MAX_VISION_RANGE = 0.70f;
 	public static final float MIN_VISION_RANGE = 0.20f;
 	public static final float COLLISION_DISTANCE = 0.20f;
-	public static final int GRAB_CALIBRATE_SPEED = 2000;
+	public static final int GRAB_CALIBRATE_SPEED = 200;
 	public static final int GRAB_RUNNING_SPEED = 2000;
 	public static final float LINEAR_ACCELERATION = 0.2f;
 	public static final double LINEAR_SPEED = 200;
