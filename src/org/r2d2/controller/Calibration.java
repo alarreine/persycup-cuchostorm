@@ -154,7 +154,7 @@ public class Calibration {
 			Controler.COLOR.calibrateColor(Color.WHITE);
 
 			Controler.COLOR.lightOff();
-			return true;
+			
 		}
 		return true;
 	}
