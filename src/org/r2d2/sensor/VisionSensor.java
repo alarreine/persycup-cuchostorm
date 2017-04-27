@@ -41,8 +41,7 @@ public class VisionSensor {
 	
 	public RangeFinderAdapter getDis(){
 		sonar.getDistanceMode();
-		SampleProvider distance= sonar.getDistanceMode();
-		float[] sample = new float[1];
+		SampleProvider distance= sonar.getMode("Distance");
 		SampleProvider average = new MedianFilter(distance,5);
 		return new RangeFinderAdapter(average);
 	}
