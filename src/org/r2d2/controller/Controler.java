@@ -1,10 +1,7 @@
 package org.r2d2.controller;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.r2d2.eye.InputHandler;
 import org.r2d2.eye.Screen;
@@ -25,7 +22,10 @@ import lejos.robotics.objectdetection.FeatureDetector;
 import lejos.robotics.objectdetection.FeatureListener;
 import lejos.robotics.objectdetection.RangeFeatureDetector;
 import lejos.utility.Delay;
-
+/**
+ *Classe principal qui gére tous les états trouvés  pendant le jeux 
+ * @author CuchoTeam
+ */
 public final class Controler implements FeatureListener {
 
 	static ColorSensor COLOR = null;
@@ -36,7 +36,7 @@ public final class Controler implements FeatureListener {
 	static Screen SCREEN = null;
 	static InputHandler INPUT = null;
 
-	// private FeatureDetector fd;
+	private FeatureDetector fd;
 
 	private CameraClient camera;
 	// True = we have a game against a robot. False sino
@@ -55,18 +55,16 @@ public final class Controler implements FeatureListener {
 		VISION = new VisionSensor();
 		SCREEN = new Screen();
 		INPUT = new InputHandler(SCREEN);
-		// motors.add(PROPULSION);
-		// motors.add(GRABER);
 
 		camera = new CameraClient(8888);
 
-		FeatureDetector fd = new RangeFeatureDetector(VISION.getDis(), R2D2Constants.DISTANCE_MAX_WALL, 500);
+		fd = new RangeFeatureDetector(VISION.getDis(), R2D2Constants.DISTANCE_MAX_WALL, 500);
 		fd.addListener(this);
 
 	}
 
 	public void start() throws IOException, ClassNotFoundException {
-		// Controler.SCREEN.showCucho();
+
 		Delay.msDelay(1000);
 		Calibration calibration = new Calibration();
 		calibration.loadCalibration();
@@ -258,7 +256,8 @@ public final class Controler implements FeatureListener {
 							searchPik = newDist;
 							PROPULSION.stopMoving();
 							if (!attempt2) {
-								PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, !seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
+								PROPULSION.rotate(R2D2Constants.QUART_CIRCLE, !seekLeft,
+										R2D2Constants.SLOW_SEARCH_SPEED);
 							} else {
 								PROPULSION.rotate(10, seekLeft, R2D2Constants.SLOW_SEARCH_SPEED);
 							}
@@ -274,7 +273,7 @@ public final class Controler implements FeatureListener {
 					} else {
 						searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
 					}
-					
+
 					// S'il a fini son tour de recherche et qu'il n'a pas trouvé
 					// de palet
 					if (!PROPULSION.isRunning() && state != State.needToGrab) {
