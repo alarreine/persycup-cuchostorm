@@ -41,11 +41,10 @@ public final class Controler implements FeatureListener {
 	private FeatureDetector fd;
 
 	private CameraClient camera;
-	// True = we have a game against a robot. False sino
-	private boolean match;
 
+	private boolean match; // True = we have a game against a robot. False sino
 
-	private boolean test = true;
+	private boolean test = false;
 
 	private static State state;
 
@@ -290,7 +289,7 @@ public final class Controler implements FeatureListener {
 							while (PROPULSION.isRunning()) {
 								PROPULSION.checkState();
 							}
-							PROPULSION.runFor(1500, true);
+							PROPULSION.runFor(1000, true);
 							while (PROPULSION.isRunning()) {
 								PROPULSION.checkState();
 								// S'il atteint la limite du terrain
@@ -568,7 +567,7 @@ public final class Controler implements FeatureListener {
 						}
 					}
 					
-					PROPULSION.run(true);
+					PROPULSION.runFor(5000,true);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed()) {
@@ -587,8 +586,40 @@ public final class Controler implements FeatureListener {
 						}
 					}
 					
-					if (!attempt2)
+					if (!attempt2){
 						seekLeft = !seekLeft;
+						attempt2=!attempt2;
+					}
+					
+					PROPULSION.rotate(60, seekLeft,
+							R2D2Constants.MAX_ROTATION_SPEED);
+					while (PROPULSION.isRunning()) {
+						PROPULSION.checkState();
+						if (INPUT.escapePressed()) {
+							return;
+						}
+					}
+					
+					PROPULSION.runFor(4000, true);
+					while (PROPULSION.isRunning()) {
+						PROPULSION.checkState();
+						if (INPUT.escapePressed()) {
+							return;
+						}
+						if(COLOR.getCurrentColor()==Color.BLACK){
+							PROPULSION.stopMoving();
+						}
+					}
+					
+					PROPULSION.rotate(60, !seekLeft,
+							R2D2Constants.MAX_ROTATION_SPEED);
+					while (PROPULSION.isRunning()) {
+						PROPULSION.checkState();
+						if (INPUT.escapePressed()) {
+							return;
+						}
+					}
+					
 					changeState(State.needToSeek);
 
 					break;
