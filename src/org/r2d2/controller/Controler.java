@@ -44,8 +44,6 @@ public final class Controler implements FeatureListener {
 	// True = we have a game against a robot. False sino
 	private boolean match;
 
-	// True if we are blue side
-	private boolean blueSide;
 
 	private boolean test = true;
 
@@ -64,8 +62,7 @@ public final class Controler implements FeatureListener {
 
 		fd = new RangeFeatureDetector(VISION.getDis(), R2D2Constants.DISTANCE_MAX_WALL, 200);
 		fd.addListener(this);
-		 state = State.firstMove;
-//		changeState(State.firstMove);
+		state = State.firstMove;
 
 	}
 
@@ -81,20 +78,12 @@ public final class Controler implements FeatureListener {
 				calibration.saveCalibration();
 			}
 
-			Controler.SCREEN.drawText("Jeux seul", "Appuyez sur OK si on jeu", "contre quelqu'un",
+			Controler.SCREEN.drawText("Jeu seul", "Appuyez sur OK si on jeu", "contre quelqu'un",
 					"Appuyez sur tout autre", "sinon");
 			if (Controler.INPUT.isThisButtonPressed(INPUT.waitAny(), Button.ID_ENTER)) {
 				match = true;
 			} else {
 				match = false;
-			}
-
-			Controler.SCREEN.drawText("Location 1", "Appuyez sur OK si on est", "dans le cote blue",
-					"Appuyez sur tout autre", "sinon");
-			if (Controler.INPUT.isThisButtonPressed(INPUT.waitAny(), Button.ID_ENTER)) {
-				blueSide = true;
-			} else {
-				blueSide = false;
 			}
 
 			Controler.SCREEN.drawText("Location 2", "Appuyez sur OK si la", "ligne noire est à gauche",
@@ -128,6 +117,9 @@ public final class Controler implements FeatureListener {
 	 * atomique possible. Cette boucle doit s'executer très rapidement.
 	 */
 
+	/**
+	 * @param seekLeft
+	 */
 	private void main(boolean seekLeft) {
 		SCREEN.clearDraw();
 		boolean run = true;
@@ -142,11 +134,15 @@ public final class Controler implements FeatureListener {
 				switch (getState()) {
 				case firstMove:
 					PROPULSION.run(true);
-					// state = State.playStart;
 					changeState(State.playStart);
 					break;
 
 				case playStart:
+					/**
+					 * Premier palet à chercher, 
+					 * rotation pour éviter les palets
+					 */
+					
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (PRESSION.isPressed()) {
@@ -175,7 +171,6 @@ public final class Controler implements FeatureListener {
 					}
 
 					// Se replace dans la bonne direction
-					// PROPULSION.orientateNorth();
 					PROPULSION.rotate(20, seekLeft, true);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
@@ -223,12 +218,15 @@ public final class Controler implements FeatureListener {
 					break;
 
 				case needToSeek:
-					// Effectue un quart de tour de recherche
-					// On effectue la recherche seulement si dans le terain il
-					// y a des pallets. On obtien le nb de palets grace à la
-					// camera.
-					// Si on est dans un match if faur rester 1 pour le robot
-					// sur le terrain
+					 /**
+					  * Effectue un quart de tour de recherche 
+					  * On effectue la recherche seulement si dans le terain il
+					  * y a des pallets. On obtien le nb de palets grace à la
+					  * camera.
+					  * Si on est dans un match if faur rester 1 pour le robot
+					  * sur le terrain
+					  */
+					 
 					nbSeek = getNbObjetSurTerrain();
 					nbSeek = match ? nbSeek - 1 : nbSeek;
 					if (nbSeek > 1) {
@@ -242,8 +240,15 @@ public final class Controler implements FeatureListener {
 					break;
 
 				case isSeeking:
-					// Si la distance de l'objet percu est entre les bornes max
-					// et min de la vision : OK
+					/**
+					 * Si l'objet percu est entre les bornes max et min de la vision :
+					 * le robot s'arrête et effectue une deuxième recherche plus lente
+					 * afin de mieux s'orienter vers ce palet.
+					 * Le robot essaye de regarder des deux côtés, (cf. attempt2) 
+					 * S'il ne trouve rien :
+					 * il avance pendant un certain temps (modifiable), et effectue cette 
+					 * même recherche, jusqu'à trouver une ligne blanche. 
+					 */
 					float newDist = VISION.getRaw()[0];
 					if (newDist < R2D2Constants.MAX_VISION_RANGE && newDist >= R2D2Constants.MIN_VISION_RANGE) {
 						if (searchPik == R2D2Constants.INIT_SEARCH_PIK_VALUE) {
@@ -262,7 +267,6 @@ public final class Controler implements FeatureListener {
 							} else {
 								PROPULSION.stopMoving();
 								attempt2 = false;
-								// state = State.needToGrab;
 								changeState(State.needToGrab);
 							}
 						}
@@ -270,23 +274,19 @@ public final class Controler implements FeatureListener {
 						searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
 					}
 
-					// S'il a fini son tour de recherche et qu'il n'a pas trouvé
-					// de palet
+					// S'il a fini son tour de recherche et qu'il n'a pas trouvé de palet
 					if (!PROPULSION.isRunning() && getState() != State.needToGrab) {
 						if (!attempt2) {
 							PROPULSION.halfTurn(!seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
-							// PROPULSION.orientateSouth(!seekLeft);
 							while (PROPULSION.isRunning()) {
 								PROPULSION.checkState();
 							}
 
 							PROPULSION.halfTurn(!seekLeft, R2D2Constants.SEARCH_SPEED);
-							// state = State.isSeeking; // Inutile ??
 							changeState(State.isSeeking);
 							attempt2 = true;
 						} else {
 							PROPULSION.halfTurn(seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
-							// PROPULSION.orientateSouth(seekLeft);
 							while (PROPULSION.isRunning()) {
 								PROPULSION.checkState();
 							}
@@ -296,18 +296,15 @@ public final class Controler implements FeatureListener {
 								// S'il atteint la limite du terrain
 								if (COLOR.getCurrentColor() == Color.WHITE) {
 									PROPULSION.stopMoving();
-									// state = State.isSeekingEnd;
 									changeState(State.isSeekingEnd);
 								}
 								if (PRESSION.isPressed()) {
 									PROPULSION.stopMoving();
-									// state = State.isCatching;
 									changeState(State.isCatching);
 									GRABER.close();
 								}
 							}
 							if (getState() == State.isSeeking) {
-								// state = State.needToSeek;
 								changeState(State.needToSeek);
 							}
 							attempt2 = false;
@@ -317,6 +314,12 @@ public final class Controler implements FeatureListener {
 					break;
 
 				case isSeekingEnd:
+					/**
+					 * Quand le robot atteint la fin de la recherche (ligne blanche)
+					 * il essaye de se mettre dans l'autre moitié du terrain pour effectuer
+					 * une autre recherche, a partir d'un autre point de départ.
+					 * S'il ne s'y retrouve pas -> isSeekingLost.
+					 */
 					boolean turnGoodSide = false;
 					PROPULSION.orientateNorth();
 					while (PROPULSION.isRunning()) {
@@ -358,9 +361,7 @@ public final class Controler implements FeatureListener {
 						while (PROPULSION.isRunning()) {
 							PROPULSION.checkState();
 						}
-						// state = State.needToSeek;
 						changeState(State.needToSeek);
-						// seekLeft = !seekLeft;
 					} else {
 						// Recule pour faire demi-tour
 						PROPULSION.runFor(R2D2Constants.QUARTER_SECOND, false);
@@ -374,8 +375,7 @@ public final class Controler implements FeatureListener {
 							PROPULSION.checkState();
 						}
 
-						// Run jusqu'à une ligne noire (signe de la traversée du
-						// terrain)
+						// Run jusqu'à une ligne noire (signe de la traversée du terrain)
 						PROPULSION.runFor(7000, true);
 
 						/**
@@ -392,8 +392,7 @@ public final class Controler implements FeatureListener {
 
 						// Continue Run jusqu'à ligne Rouge ou jaune pour
 						// commencer nouvelle recherche
-						// S'il trouve une autre couleur de ligne, il est perdu
-						// :(
+						// S'il trouve une autre couleur de ligne, il est perdu :(
 						while (PROPULSION.isRunning()) {
 							PROPULSION.checkState();
 							if (COLOR.getCurrentColor() == Color.RED || COLOR.getCurrentColor() == Color.YELLOW) {
@@ -403,12 +402,10 @@ public final class Controler implements FeatureListener {
 								while (PROPULSION.isRunning()) {
 									PROPULSION.checkState();
 								}
-								// state = State.needToSeek;
 								changeState(State.needToSeek);
 							}
 							if (COLOR.getCurrentColor() == Color.BLUE || COLOR.getCurrentColor() == Color.GREEN) {
 								PROPULSION.stopMoving();
-								// state = State.isSeekingLost;
 								changeState(State.isSeekingLost);
 							}
 							if (INPUT.escapePressed()) {
@@ -421,6 +418,10 @@ public final class Controler implements FeatureListener {
 					break;
 
 				case isSeekingLost:
+					/**
+					 * S'il le robot est perdu, on cherche de nouveau la ligne blanche 
+					 * du camp adverse pour commencer une nouvelle recherche.
+					 */
 					PROPULSION.stopMoving();
 					PROPULSION.orientateNorth();
 					while (PROPULSION.isRunning()) {
@@ -437,17 +438,22 @@ public final class Controler implements FeatureListener {
 						}
 					}
 					PROPULSION.volteFace(seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
-					// state = State.needToSeek;
 					changeState(State.needToSeek);
 					break;
 
 				case needToGrab:
+					/**
+					 * Le robot va chercher le palet.
+					 */
 					PROPULSION.runFor(R2D2Constants.MAX_GRABING_TIME, true);
-					// state = State.isGrabing;
 					changeState(State.isGrabing);
 					break;
 
 				case isGrabing:
+					/**
+					 * Si le robot n'a pas atteint le palet,
+					 * alors il recule et refait une recherche.
+					 */
 					if (PRESSION.isPressed()) {
 						PROPULSION.stopMoving();
 						GRABER.close();
@@ -456,34 +462,35 @@ public final class Controler implements FeatureListener {
 							if (INPUT.escapePressed())
 								return;
 						}
-						// state = State.isCatching;
 						changeState(State.isCatching);
 					}
 
 					if (!PROPULSION.isRunning() && getState() != State.isCatching) {
 
-						PROPULSION.runFor(1000, false);
+						PROPULSION.runFor(1500, false);
 						while (PROPULSION.isRunning()) {
 							PROPULSION.checkState();
 						}
-						// state = State.needToSeek;
 						changeState(State.needToSeek);
 					}
 
 					break;
 
-				// Il a le palet et s'oriente vers le camp adverse
 				case isCatching:
+					/**
+					 * Il a le palet et s'oriente vers le camp adverse.
+					 */
 					PROPULSION.orientateNorth();
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 					}
-					// state = State.needToScoreGoal;
 					changeState(State.needToScoreGoal);
 					break;
 
 				case needToScoreGoal:
-					// We come back to score a goal
+					/**
+					 *  We come back to score a goal
+					 */
 					PROPULSION.run(true);
 					while (PROPULSION.isRunning()&&getState()==State.needToScoreGoal) {
 						PROPULSION.checkState();
@@ -492,15 +499,15 @@ public final class Controler implements FeatureListener {
 						}
 						if (COLOR.getCurrentColor() == Color.WHITE) {
 							PROPULSION.stopMoving();
-							// state = State.needToReleaseBall;
 							changeState(State.needToReleaseBall);
 						}
 					}
 					break;
 
 				case needToReleaseBall:
-					// The robot have detected the white line, so it have to
-					// release the ball
+					/**
+					 *  The robot have detected the white line, so it have to release the ball
+					 */
 					GRABER.open();
 					while (GRABER.isRunning()) {
 						GRABER.checkState();
@@ -522,7 +529,6 @@ public final class Controler implements FeatureListener {
 							return;
 					}
 
-//					state = State.needToSeek;
 					changeState(State.needToSeek);
 
 					break;
@@ -534,6 +540,7 @@ public final class Controler implements FeatureListener {
 					 * the adversary
 					 */
 					System.out.println("State HOLAA");
+					boolean whiteLine=false;
 					PROPULSION.stopMoving();
 					PROPULSION.run(false);
 					while (PROPULSION.isRunning()) {
@@ -542,21 +549,47 @@ public final class Controler implements FeatureListener {
 							return;
 						}
 						if (COLOR.getCurrentColor() != Color.GRAY) {
+							if(COLOR.getCurrentColor() == Color.WHITE){
+								whiteLine=true;
+							}
 							PROPULSION.stopMoving();
 						}
 					}
-
-					PROPULSION.orientateNorth();
+					
+					if(whiteLine){
+						PROPULSION.orientateSouth(seekLeft);
+					}else{
+						PROPULSION.orientateNorth();
+					}
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed()) {
 							return;
 						}
 					}
-
-					seekLeft = !seekLeft;
-//					state = State.isSeeking;
-					changeState(State.isSeeking);
+					
+					PROPULSION.run(true);
+					while (PROPULSION.isRunning()) {
+						PROPULSION.checkState();
+						if (INPUT.escapePressed()) {
+							return;
+						}
+						if(COLOR.getCurrentColor()==Color.WHITE){
+							PROPULSION.stopMoving();
+						}
+					}
+					
+					PROPULSION.volteFace(seekLeft);
+					while (PROPULSION.isRunning()) {
+						PROPULSION.checkState();
+						if (INPUT.escapePressed()) {
+							return;
+						}
+					}
+					
+					if (!attempt2)
+						seekLeft = !seekLeft;
+					changeState(State.needToSeek);
 
 					break;
 
@@ -581,33 +614,11 @@ public final class Controler implements FeatureListener {
 						}
 					}
 
-//					state = State.needToScoreGoal;
 					changeState(State.needToScoreGoal);
 
 					break;
 
 				}
-
-				/*
-				 * TODO : Case! - isSeekingEnd -> Si plus d'objet sur le
-				 * terrain, STOP! - needToGrab -> Aller pret d'un palet
-				 * (impossible a tester à la maison) mlm - isGrabing -> Comment
-				 * savoir s'il est prêt du palet ? pour pouvoir ajuster
-				 * l'orientation vers le palet et ne pas continuer pendant le
-				 * MAXTIMEGRAB'. + Si OK ^ : 3 tentatives ;) (FAIT PLUS BAS) -
-				 * isCatching -> OrienterNord - GoBackHome -> run jusqu'à la
-				 * ligne blanche + open graber + backward + volte face ->
-				 * needToSeek
-				 * 
-				 * TODO : GENERAL - Aller chercher un palet, en ayant la
-				 * distance ou en f° de la vue si c'est possible. (savoir se
-				 * deplacer sur une distance???) - Faire la différence entre un
-				 * robot et un objet
-				 * 
-				 * note:isGrabing fonctionne que si le robot touche le palet du
-				 * premier coup...
-				 * 
-				 */
 
 				if (INPUT.escapePressed())
 					return;
