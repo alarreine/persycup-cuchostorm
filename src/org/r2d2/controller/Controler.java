@@ -30,23 +30,22 @@ import lejos.utility.Delay;
  */
 public final class Controler implements FeatureListener {
 
-	static ColorSensor COLOR = null;
-	static Propulsion PROPULSION = null;
-	static Graber GRABER = null;
-	static PressionSensor PRESSION = null;
-	static VisionSensor VISION = null;
-	static Screen SCREEN = null;
-	static InputHandler INPUT = null;
-
-	private FeatureDetector fd;
+	private static ColorSensor COLOR = null;
+	private static Propulsion PROPULSION = null;
+	private static Graber GRABER = null;
+	private static PressionSensor PRESSION = null;
+	private static VisionSensor VISION = null;
+	private static Screen SCREEN = null;
+	private static InputHandler INPUT = null;
+	private static State state;
 
 	private CameraClient camera;
 
+	// Listener for the mur
+	private FeatureDetector fd;
 	private boolean match; // True = we have a game against a robot. False sino
 
 	private boolean test = false;
-
-	private static State state;
 
 	public Controler() {
 		PROPULSION = new Propulsion();
@@ -61,6 +60,7 @@ public final class Controler implements FeatureListener {
 
 		fd = new RangeFeatureDetector(VISION.getDis(), R2D2Constants.DISTANCE_MAX_WALL, 200);
 		fd.addListener(this);
+		
 		state = State.firstMove;
 
 	}
@@ -121,12 +121,13 @@ public final class Controler implements FeatureListener {
 	 */
 	private void main(boolean seekLeft) {
 		SCREEN.clearDraw();
+		changeState(State.firstMove);
 		boolean run = true;
 		float searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
 		int nbSeek = getNbObjetSurTerrain();
 		boolean attempt2 = false;
 		while (run) {
-			 System.out.println(getState());
+			System.out.println(getState());
 			try {
 				PROPULSION.checkState();
 				GRABER.checkState();
@@ -138,10 +139,9 @@ public final class Controler implements FeatureListener {
 
 				case playStart:
 					/**
-					 * Premier palet à chercher, 
-					 * rotation pour éviter les palets
+					 * Premier palet à chercher, rotation pour éviter les palets
 					 */
-					
+
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (PRESSION.isPressed()) {
@@ -217,15 +217,14 @@ public final class Controler implements FeatureListener {
 					break;
 
 				case needToSeek:
-					 /**
-					  * Effectue un quart de tour de recherche 
-					  * On effectue la recherche seulement si dans le terain il
-					  * y a des pallets. On obtien le nb de palets grace à la
-					  * camera.
-					  * Si on est dans un match if faur rester 1 pour le robot
-					  * sur le terrain
-					  */
-					 
+					/**
+					 * Effectue un quart de tour de recherche On effectue la
+					 * recherche seulement si dans le terain il y a des pallets.
+					 * On obtien le nb de palets grace à la camera. Si on est
+					 * dans un match if faur rester 1 pour le robot sur le
+					 * terrain
+					 */
+
 					nbSeek = getNbObjetSurTerrain();
 					nbSeek = match ? nbSeek - 1 : nbSeek;
 					if (nbSeek > 1) {
@@ -240,13 +239,13 @@ public final class Controler implements FeatureListener {
 
 				case isSeeking:
 					/**
-					 * Si l'objet percu est entre les bornes max et min de la vision :
-					 * le robot s'arrête et effectue une deuxième recherche plus lente
-					 * afin de mieux s'orienter vers ce palet.
-					 * Le robot essaye de regarder des deux côtés, (cf. attempt2) 
-					 * S'il ne trouve rien :
-					 * il avance pendant un certain temps (modifiable), et effectue cette 
-					 * même recherche, jusqu'à trouver une ligne blanche. 
+					 * Si l'objet percu est entre les bornes max et min de la
+					 * vision : le robot s'arrête et effectue une deuxième
+					 * recherche plus lente afin de mieux s'orienter vers ce
+					 * palet. Le robot essaye de regarder des deux côtés, (cf.
+					 * attempt2) S'il ne trouve rien : il avance pendant un
+					 * certain temps (modifiable), et effectue cette même
+					 * recherche, jusqu'à trouver une ligne blanche.
 					 */
 					float newDist = VISION.getRaw()[0];
 					if (newDist < R2D2Constants.MAX_VISION_RANGE && newDist >= R2D2Constants.MIN_VISION_RANGE) {
@@ -273,7 +272,8 @@ public final class Controler implements FeatureListener {
 						searchPik = R2D2Constants.INIT_SEARCH_PIK_VALUE;
 					}
 
-					// S'il a fini son tour de recherche et qu'il n'a pas trouvé de palet
+					// S'il a fini son tour de recherche et qu'il n'a pas trouvé
+					// de palet
 					if (!PROPULSION.isRunning() && getState() != State.needToGrab) {
 						if (!attempt2) {
 							PROPULSION.halfTurn(!seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
@@ -314,10 +314,11 @@ public final class Controler implements FeatureListener {
 
 				case isSeekingEnd:
 					/**
-					 * Quand le robot atteint la fin de la recherche (ligne blanche)
-					 * il essaye de se mettre dans l'autre moitié du terrain pour effectuer
-					 * une autre recherche, a partir d'un autre point de départ.
-					 * S'il ne s'y retrouve pas -> isSeekingLost.
+					 * Quand le robot atteint la fin de la recherche (ligne
+					 * blanche) il essaye de se mettre dans l'autre moitié du
+					 * terrain pour effectuer une autre recherche, a partir d'un
+					 * autre point de départ. S'il ne s'y retrouve pas ->
+					 * isSeekingLost.
 					 */
 					boolean turnGoodSide = false;
 					PROPULSION.orientateNorth();
@@ -374,7 +375,8 @@ public final class Controler implements FeatureListener {
 							PROPULSION.checkState();
 						}
 
-						// Run jusqu'à une ligne noire (signe de la traversée du terrain)
+						// Run jusqu'à une ligne noire (signe de la traversée du
+						// terrain)
 						PROPULSION.runFor(7000, true);
 
 						/**
@@ -391,7 +393,8 @@ public final class Controler implements FeatureListener {
 
 						// Continue Run jusqu'à ligne Rouge ou jaune pour
 						// commencer nouvelle recherche
-						// S'il trouve une autre couleur de ligne, il est perdu :(
+						// S'il trouve une autre couleur de ligne, il est perdu
+						// :(
 						while (PROPULSION.isRunning()) {
 							PROPULSION.checkState();
 							if (COLOR.getCurrentColor() == Color.RED || COLOR.getCurrentColor() == Color.YELLOW) {
@@ -418,8 +421,9 @@ public final class Controler implements FeatureListener {
 
 				case isSeekingLost:
 					/**
-					 * S'il le robot est perdu, on cherche de nouveau la ligne blanche 
-					 * du camp adverse pour commencer une nouvelle recherche.
+					 * S'il le robot est perdu, on cherche de nouveau la ligne
+					 * blanche du camp adverse pour commencer une nouvelle
+					 * recherche.
 					 */
 					PROPULSION.stopMoving();
 					PROPULSION.orientateNorth();
@@ -450,8 +454,8 @@ public final class Controler implements FeatureListener {
 
 				case isGrabing:
 					/**
-					 * Si le robot n'a pas atteint le palet,
-					 * alors il recule et refait une recherche.
+					 * Si le robot n'a pas atteint le palet, alors il recule et
+					 * refait une recherche.
 					 */
 					if (PRESSION.isPressed()) {
 						PROPULSION.stopMoving();
@@ -488,10 +492,10 @@ public final class Controler implements FeatureListener {
 
 				case needToScoreGoal:
 					/**
-					 *  We come back to score a goal
+					 * We come back to score a goal
 					 */
 					PROPULSION.run(true);
-					while (PROPULSION.isRunning()&&getState()==State.needToScoreGoal) {
+					while (PROPULSION.isRunning() && getState() == State.needToScoreGoal) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed()) {
 							PROPULSION.stopMoving();
@@ -505,7 +509,8 @@ public final class Controler implements FeatureListener {
 
 				case needToReleaseBall:
 					/**
-					 *  The robot have detected the white line, so it have to release the ball
+					 * The robot have detected the white line, so it have to
+					 * release the ball
 					 */
 					GRABER.open();
 					while (GRABER.isRunning()) {
@@ -539,7 +544,7 @@ public final class Controler implements FeatureListener {
 					 * the adversary
 					 */
 					System.out.println("State HOLAA");
-					boolean whiteLine=false;
+					boolean whiteLine = false;
 					PROPULSION.stopMoving();
 					PROPULSION.run(false);
 					while (PROPULSION.isRunning()) {
@@ -548,16 +553,16 @@ public final class Controler implements FeatureListener {
 							return;
 						}
 						if (COLOR.getCurrentColor() != Color.GRAY) {
-							if(COLOR.getCurrentColor() == Color.WHITE){
-								whiteLine=true;
+							if (COLOR.getCurrentColor() == Color.WHITE) {
+								whiteLine = true;
 							}
 							PROPULSION.stopMoving();
 						}
 					}
-					
-					if(whiteLine){
+
+					if (whiteLine) {
 						PROPULSION.orientateSouth(seekLeft);
-					}else{
+					} else {
 						PROPULSION.orientateNorth();
 					}
 					while (PROPULSION.isRunning()) {
@@ -566,18 +571,18 @@ public final class Controler implements FeatureListener {
 							return;
 						}
 					}
-					
-					PROPULSION.runFor(5000,true);
+
+					PROPULSION.runFor(5000, true);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed()) {
 							return;
 						}
-						if(COLOR.getCurrentColor()==Color.WHITE){
+						if (COLOR.getCurrentColor() == Color.WHITE) {
 							PROPULSION.stopMoving();
 						}
 					}
-					
+
 					PROPULSION.volteFace(seekLeft);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
@@ -585,41 +590,39 @@ public final class Controler implements FeatureListener {
 							return;
 						}
 					}
-					
-					if (!attempt2){
+
+					if (!attempt2) {
 						seekLeft = !seekLeft;
-						attempt2=!attempt2;
+						attempt2 = !attempt2;
 					}
-					
-					PROPULSION.rotate(60, seekLeft,
-							R2D2Constants.MAX_ROTATION_SPEED);
+
+					PROPULSION.rotate(60, seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed()) {
 							return;
 						}
 					}
-					
+
 					PROPULSION.runFor(4000, true);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed()) {
 							return;
 						}
-						if(COLOR.getCurrentColor()==Color.BLACK){
+						if (COLOR.getCurrentColor() == Color.BLACK) {
 							PROPULSION.stopMoving();
 						}
 					}
-					
-					PROPULSION.rotate(60, !seekLeft,
-							R2D2Constants.MAX_ROTATION_SPEED);
+
+					PROPULSION.rotate(60, !seekLeft, R2D2Constants.MAX_ROTATION_SPEED);
 					while (PROPULSION.isRunning()) {
 						PROPULSION.checkState();
 						if (INPUT.escapePressed()) {
 							return;
 						}
 					}
-					
+
 					changeState(State.needToSeek);
 
 					break;
@@ -686,8 +689,8 @@ public final class Controler implements FeatureListener {
 
 	@Override
 	public void featureDetected(Feature feature, FeatureDetector detector) {
-		System.out.println("State " + state + " Range" + feature.getRangeReading().getRange());
-		if(getState() == State.wallInFrontWithPallet || getState()==State.wallInFront){
+
+		if (getState() == State.wallInFrontWithPallet || getState() == State.wallInFront) {
 			return;
 		}
 		if (getState() == State.needToScoreGoal) {
