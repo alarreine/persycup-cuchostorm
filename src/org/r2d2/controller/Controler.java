@@ -30,14 +30,14 @@ import lejos.utility.Delay;
  */
 public final class Controler implements FeatureListener {
 
-	private static ColorSensor COLOR = null;
-	private static Propulsion PROPULSION = null;
-	private static Graber GRABER = null;
-	private static PressionSensor PRESSION = null;
-	private static VisionSensor VISION = null;
-	private static Screen SCREEN = null;
-	private static InputHandler INPUT = null;
-	private static State state;
+	static ColorSensor COLOR = null;
+	static Propulsion PROPULSION = null;
+	static Graber GRABER = null;
+	static PressionSensor PRESSION = null;
+	static VisionSensor VISION = null;
+	static Screen SCREEN = null;
+	static InputHandler INPUT = null;
+	static State state;
 
 	private CameraClient camera;
 
